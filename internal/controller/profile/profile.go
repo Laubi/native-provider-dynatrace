@@ -19,6 +19,11 @@ package profile
 import (
 	"context"
 	"fmt"
+	profile "github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/api/builtin/alerting/profile"
+	profileSettings "github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/api/builtin/alerting/profile/settings"
+	"github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/settings"
+	"k8s.io/apimachinery/pkg/util/json"
+	"log/slog"
 
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -38,19 +43,40 @@ import (
 )
 
 const (
-	errNotProfile    = "managed resource is not a Profile custom resource"
+	errNotProfile   = "managed resource is not a Profile custom resource"
 	errTrackPCUsage = "cannot track ProviderConfig usage"
 	errGetPC        = "cannot get ProviderConfig"
 	errGetCreds     = "cannot get credentials"
 
-	errNewClient = "cannot create new Service"
+	errNewClient   = "cannot create new Service"
+	errCredentials = "cannot unmarshal credentials"
 )
 
-// A NoOpService does nothing.
-type NoOpService struct{}
+// A service does something.
+type service struct {
+	client settings.CRUDService[*profileSettings.Profile]
+}
 
 var (
-	newNoOpService = func(_ []byte) (interface{}, error) { return &NoOpService{}, nil }
+	newProfileService = func(data []byte) (*service, error) {
+
+		c := struct {
+			Url   string `json:"url"`
+			Token string `json:"token"`
+		}{}
+
+		if err := json.Unmarshal(data, &c); err != nil {
+			return nil, errors.Wrap(err, errCredentials)
+		}
+
+		slog.Debug("secrets", "credentials", c)
+		return &service{
+			client: profile.Service(&settings.Credentials{
+				URL:   c.Url,
+				Token: c.Token,
+			}),
+		}, nil
+	}
 )
 
 // Setup adds a controller that reconciles Profile managed resources.
@@ -67,7 +93,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		managed.WithExternalConnecter(&connector{
 			kube:         mgr.GetClient(),
 			usage:        resource.NewProviderConfigUsageTracker(mgr.GetClient(), &apisv1alpha1.ProviderConfigUsage{}),
-			newServiceFn: newNoOpService}),
+			newServiceFn: newProfileService}),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
 		managed.WithPollInterval(o.PollInterval),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
@@ -86,7 +112,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 type connector struct {
 	kube         client.Client
 	usage        resource.Tracker
-	newServiceFn func(creds []byte) (interface{}, error)
+	newServiceFn func(creds []byte) (*service, error)
 }
 
 // Connect typically produces an ExternalClient by:
