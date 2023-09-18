@@ -1,9 +1,9 @@
-apiVersion: sample.dynatrace.crossplane.io/v1alpha1
-kind: MyType
+apiVersion: alerting.dynatrace.crossplane.io/v1alpha1
+kind: Profile
 metadata:
   name: example
 spec:
   forProvider:
-    configurableField: test
+    name: "My name"
   providerConfigRef:
     name: example

@@ -27,12 +27,11 @@ import (
 
 // ProfileParameters are the configurable fields of a Profile.
 type ProfileParameters struct {
-	ConfigurableField string `json:"configurableField"`
+	Name string `json:"name"`
 }
 
 // ProfileObservation are the observable fields of a Profile.
 type ProfileObservation struct {
-	ObservableField string `json:"observableField,omitempty"`
 }
 
 // A ProfileSpec defines the desired state of a Profile.
