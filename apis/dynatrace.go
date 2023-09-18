@@ -20,7 +20,7 @@ package apis
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 
-	samplev1alpha1 "github.com/crossplane/provider-dynatrace/apis/sample/v1alpha1"
+	alertingalpha1 "github.com/crossplane/provider-dynatrace/apis/alerting/v1alpha1"
 	dynatracev1alpha1 "github.com/crossplane/provider-dynatrace/apis/v1alpha1"
 )
 
@@ -28,7 +28,7 @@ func init() {
 	// Register the types with the Scheme so the components can map objects to GroupVersionKinds and back
 	AddToSchemes = append(AddToSchemes,
 		dynatracev1alpha1.SchemeBuilder.AddToScheme,
-		samplev1alpha1.SchemeBuilder.AddToScheme,
+		alertingalpha1.SchemeBuilder.AddToScheme,
 	)
 }
 
