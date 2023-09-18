@@ -67,10 +67,10 @@ spec:
               forProvider:
                 description: ProfileParameters are the configurable fields of a Profile.
                 properties:
-                  configurableField:
+                  name:
                     type: string
                 required:
-                - configurableField
+                - name
                 type: object
               managementPolicies:
                 default:
@@ -274,9 +274,6 @@ spec:
             properties:
               atProvider:
                 description: ProfileObservation are the observable fields of a Profile.
-                properties:
-                  observableField:
-                    type: string
                 type: object
               conditions:
                 description: Conditions of the resource.
