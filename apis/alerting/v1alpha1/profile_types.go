@@ -32,6 +32,7 @@ type ProfileParameters struct {
 
 // ProfileObservation are the observable fields of a Profile.
 type ProfileObservation struct {
+	Id string `json:"id"`
 }
 
 // A ProfileSpec defines the desired state of a Profile.
