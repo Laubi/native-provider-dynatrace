@@ -18,18 +18,21 @@ package profile
 
 import (
 	"context"
-	"fmt"
+	json2 "encoding/json"
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	profile "github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/api/builtin/alerting/profile"
 	profileSettings "github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/api/builtin/alerting/profile/settings"
+	"github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/rest"
 	"github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/settings"
 	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/util/json"
-
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/json"
+	"net/http"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -165,43 +168,43 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotProfile)
 	}
 
-	log := logging.NewLogrLogger(logr.FromContextOrDiscard(ctx))
-	log.Debug("Observing profile", "id", meta.GetExternalName(cr), "fromProvder", cr.Spec.ForProvider, "atProvider", cr.Status.AtProvider)
-	if cr.Status.AtProvider.Id != "" {
+	id := meta.GetExternalName(cr)
 
-		var p profileSettings.Profile
-		err := c.service.client.Get(cr.Status.AtProvider.Id, &p)
-		if err != nil {
-			log.Info("failed to GET profile", "err", err)
-			return managed.ExternalObservation{}, err
+	log := logging.NewLogrLogger(logr.FromContextOrDiscard(ctx))
+	log = log.WithValues("id", id)
+
+	var p profileSettings.Profile
+	err := c.service.client.Get(id, &p)
+	if err != nil {
+		log.Info("Failed to GET profile", "err", err, "prettyerror", PrettyPrint(err))
+
+		var restError rest.Error
+		if errors.As(err, &restError) {
+			if restError.Code == http.StatusNotFound {
+				return managed.ExternalObservation{ResourceExists: false}, nil
+			}
 		}
 
-		log.Info("got profile", "p", p)
-		cr.Status.SetConditions(xpv1.Available())
+		PrettyPrint(err)
+		return managed.ExternalObservation{}, err
+	}
 
-	} else {
-		cr.Status.SetConditions(xpv1.Unavailable())
+	// object exists -> check if updated
+	cr.Status.SetConditions(xpv1.Available())
+
+	local := crdToDto(cr.Spec.ForProvider)
+	if diff := cmp.Diff(p, local, cmpopts.IgnoreFields(profileSettings.Profile{}, "LegacyID")); diff != "" {
+		log.Debug("Difference between local and remote object", "local", local, "remote", p, "diff", diff)
 		return managed.ExternalObservation{
-			ResourceExists:          false,
-			ResourceUpToDate:        false,
-			ResourceLateInitialized: false,
+			ResourceExists:   true,
+			ResourceUpToDate: false,
+			Diff:             diff,
 		}, nil
 	}
 
 	return managed.ExternalObservation{
-		// Return false when the external resource does not exist. This lets
-		// the managed resource reconciler know that it needs to call Create to
-		// (re)create the resource, or that it has successfully been deleted.
-		ResourceExists: true,
-
-		// Return false when the external resource exists, but it not up to date
-		// with the desired managed resource state. This lets the managed
-		// resource reconciler know that it needs to call Update.
+		ResourceExists:   true,
 		ResourceUpToDate: true,
-
-		// Return any details that may be required to connect to the external
-		// resource. These will be stored as the connection secret.
-		ConnectionDetails: managed.ConnectionDetails{},
 	}, nil
 }
 
@@ -214,24 +217,19 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	log := logging.NewLogrLogger(logr.FromContextOrDiscard(ctx))
 	log.Info("Creating profile", "id", meta.GetExternalName(cr))
 
-	p := profileSettings.Profile{
-		Name:           cr.Spec.ForProvider.Name,
-		ManagementZone: nil,
-		SeverityRules:  nil,
-		EventFilters:   nil,
-		LegacyID:       nil,
-	}
+	p := crdToDto(cr.Spec.ForProvider)
 	createResp, err := c.service.client.Create(&p)
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, "failed to create")
 	}
 
 	log.Debug("returned obj", "obj", createResp)
-	cr.Status.AtProvider.Id = createResp.ID
-	cr.Status.SetConditions(xpv1.Creating())
-	log.Debug("Updated cr status", "atprovider", cr.Status.AtProvider)
+	meta.SetExternalName(cr, createResp.ID)
+	log.Debug("Updated cr status", "externalname", meta.GetExternalName(cr))
 
-	return managed.ExternalCreation{}, nil
+	return managed.ExternalCreation{
+		ConnectionDetails: managed.ConnectionDetails{},
+	}, nil
 }
 
 func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
@@ -240,13 +238,13 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotProfile)
 	}
 
-	fmt.Printf("Updating: %+v", cr)
+	dto := crdToDto(cr.Spec.ForProvider)
+	err := c.service.client.Update(meta.GetExternalName(cr), &dto)
+	if err != nil {
+		return managed.ExternalUpdate{}, err
+	}
 
-	return managed.ExternalUpdate{
-		// Optionally return any details that may be required to connect to the
-		// external resource. These will be stored as the connection secret.
-		ConnectionDetails: managed.ConnectionDetails{},
-	}, nil
+	return managed.ExternalUpdate{}, nil
 }
 
 func (c *external) Delete(ctx context.Context, mg resource.Managed) error {
@@ -255,7 +253,29 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) error {
 		return errors.New(errNotProfile)
 	}
 
-	fmt.Printf("Deleting: %+v", cr)
+	err := c.service.client.Delete(meta.GetExternalName(cr))
+	return err
+}
 
-	return nil
+func PrettyPrint(data any) any {
+	var p []byte
+	p, err := json2.MarshalIndent(data, "", "\t")
+	if err != nil {
+		panic(err)
+	}
+
+	if err := json2.Unmarshal(p, &data); err != nil {
+		panic(err)
+	}
+
+	return data
+}
+
+func crdToDto(p v1alpha1.ProfileParameters) profileSettings.Profile {
+
+	return profileSettings.Profile{
+		Name:          p.Name,
+		EventFilters:  profileSettings.EventFilters{},
+		SeverityRules: profileSettings.SeverityRules{},
+	}
 }
