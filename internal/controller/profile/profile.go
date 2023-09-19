@@ -19,11 +19,14 @@ package profile
 import (
 	"context"
 	"fmt"
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
+	"github.com/crossplane/crossplane-runtime/pkg/logging"
+	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	profile "github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/api/builtin/alerting/profile"
 	profileSettings "github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/api/builtin/alerting/profile/settings"
 	"github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/settings"
+	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/util/json"
-	"log/slog"
 
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -69,7 +72,6 @@ var (
 			return nil, errors.Wrap(err, errCredentials)
 		}
 
-		slog.Debug("secrets", "credentials", c)
 		return &service{
 			client: profile.Service(&settings.Credentials{
 				URL:   c.Url,
@@ -154,7 +156,7 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 type external struct {
 	// A 'client' used to connect to the external resource API. In practice this
 	// would be something like an AWS SDK client.
-	service interface{}
+	service *service
 }
 
 func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
@@ -163,8 +165,28 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotProfile)
 	}
 
-	// These fmt statements should be removed in the real implementation.
-	fmt.Printf("Observing: %+v", cr)
+	log := logging.NewLogrLogger(logr.FromContextOrDiscard(ctx))
+	log.Debug("Observing profile", "id", meta.GetExternalName(cr), "fromProvder", cr.Spec.ForProvider, "atProvider", cr.Status.AtProvider)
+	if cr.Status.AtProvider.Id != "" {
+
+		var p profileSettings.Profile
+		err := c.service.client.Get(cr.Status.AtProvider.Id, &p)
+		if err != nil {
+			log.Info("failed to GET profile", "err", err)
+			return managed.ExternalObservation{}, err
+		}
+
+		log.Info("got profile", "p", p)
+		cr.Status.SetConditions(xpv1.Available())
+
+	} else {
+		cr.Status.SetConditions(xpv1.Unavailable())
+		return managed.ExternalObservation{
+			ResourceExists:          false,
+			ResourceUpToDate:        false,
+			ResourceLateInitialized: false,
+		}, nil
+	}
 
 	return managed.ExternalObservation{
 		// Return false when the external resource does not exist. This lets
@@ -189,13 +211,27 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotProfile)
 	}
 
-	fmt.Printf("Creating: %+v", cr)
+	log := logging.NewLogrLogger(logr.FromContextOrDiscard(ctx))
+	log.Info("Creating profile", "id", meta.GetExternalName(cr))
 
-	return managed.ExternalCreation{
-		// Optionally return any details that may be required to connect to the
-		// external resource. These will be stored as the connection secret.
-		ConnectionDetails: managed.ConnectionDetails{},
-	}, nil
+	p := profileSettings.Profile{
+		Name:           cr.Spec.ForProvider.Name,
+		ManagementZone: nil,
+		SeverityRules:  nil,
+		EventFilters:   nil,
+		LegacyID:       nil,
+	}
+	createResp, err := c.service.client.Create(&p)
+	if err != nil {
+		return managed.ExternalCreation{}, errors.Wrap(err, "failed to create")
+	}
+
+	log.Debug("returned obj", "obj", createResp)
+	cr.Status.AtProvider.Id = createResp.ID
+	cr.Status.SetConditions(xpv1.Creating())
+	log.Debug("Updated cr status", "atprovider", cr.Status.AtProvider)
+
+	return managed.ExternalCreation{}, nil
 }
 
 func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {

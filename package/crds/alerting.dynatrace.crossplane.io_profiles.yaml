@@ -274,6 +274,11 @@ spec:
             properties:
               atProvider:
                 description: ProfileObservation are the observable fields of a Profile.
+                properties:
+                  id:
+                    type: string
+                required:
+                - id
                 type: object
               conditions:
                 description: Conditions of the resource.
