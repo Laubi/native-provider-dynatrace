@@ -23,6 +23,7 @@ import (
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
+	"github.com/crossplane/provider-dynatrace/internal/credentials"
 	profile "github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/api/builtin/alerting/profile"
 	profileSettings "github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/api/builtin/alerting/profile/settings"
 	"github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/rest"
@@ -66,21 +67,13 @@ type service struct {
 
 var (
 	newProfileService = func(data []byte) (*service, error) {
-
-		c := struct {
-			Url   string `json:"url"`
-			Token string `json:"token"`
-		}{}
-
-		if err := json.Unmarshal(data, &c); err != nil {
-			return nil, errors.Wrap(err, errCredentials)
+		c, err := credentials.Unmarshal(data)
+		if err != nil {
+			return nil, err
 		}
 
 		return &service{
-			client: profile.Service(&settings.Credentials{
-				URL:   c.Url,
-				Token: c.Token,
-			}),
+			client: profile.Service(c),
 		}, nil
 	}
 )
