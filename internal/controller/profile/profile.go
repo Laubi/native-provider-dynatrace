@@ -19,6 +19,7 @@ package profile
 import (
 	"context"
 	json2 "encoding/json"
+	"fmt"
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
@@ -192,9 +193,14 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	// object exists -> check if updated
 	cr.Status.SetConditions(xpv1.Available())
 
-	local := crdToDto(cr.Spec.ForProvider)
-	if diff := cmp.Diff(p, local, cmpopts.IgnoreFields(profileSettings.Profile{}, "LegacyID")); diff != "" {
+	local, err := crdToDto(cr.Spec.ForProvider)
+	if err != nil {
+		return managed.ExternalObservation{}, err
+	}
+
+	if diff := cmp.Diff(p, local, cmpopts.IgnoreFields(profileSettings.Profile{}, "LegacyID"), cmpopts.EquateEmpty()); diff != "" {
 		log.Debug("Difference between local and remote object", "local", local, "remote", p, "diff", diff)
+		fmt.Println(diff)
 		return managed.ExternalObservation{
 			ResourceExists:   true,
 			ResourceUpToDate: false,
@@ -217,7 +223,10 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	log := logging.NewLogrLogger(logr.FromContextOrDiscard(ctx))
 	log.Info("Creating profile", "id", meta.GetExternalName(cr))
 
-	p := crdToDto(cr.Spec.ForProvider)
+	p, err := crdToDto(cr.Spec.ForProvider)
+	if err != nil {
+		return managed.ExternalCreation{}, err
+	}
 	createResp, err := c.service.client.Create(&p)
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, "failed to create")
@@ -238,8 +247,12 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, errors.New(errNotProfile)
 	}
 
-	dto := crdToDto(cr.Spec.ForProvider)
-	err := c.service.client.Update(meta.GetExternalName(cr), &dto)
+	dto, err := crdToDto(cr.Spec.ForProvider)
+	if err != nil {
+		return managed.ExternalUpdate{}, err
+	}
+
+	err = c.service.client.Update(meta.GetExternalName(cr), &dto)
 	if err != nil {
 		return managed.ExternalUpdate{}, err
 	}
@@ -271,11 +284,18 @@ func PrettyPrint(data any) any {
 	return data
 }
 
-func crdToDto(p v1alpha1.ProfileParameters) profileSettings.Profile {
+func crdToDto(p v1alpha1.ProfileParameters) (profileSettings.Profile, error) {
 
-	return profileSettings.Profile{
-		Name:          p.Name,
-		EventFilters:  profileSettings.EventFilters{},
-		SeverityRules: profileSettings.SeverityRules{},
+	j, err := json.Marshal(p)
+	if err != nil {
+		return profileSettings.Profile{}, err
 	}
+
+	var r profileSettings.Profile
+	err = json.Unmarshal(j, &r)
+	if err != nil {
+		return profileSettings.Profile{}, err
+	}
+
+	return r, nil
 }

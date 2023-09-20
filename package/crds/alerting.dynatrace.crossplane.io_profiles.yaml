@@ -67,8 +67,149 @@ spec:
               forProvider:
                 description: ProfileParameters are the configurable fields of a Profile.
                 properties:
+                  eventFilters:
+                    items:
+                      properties:
+                        customFilter:
+                          properties:
+                            descriptionFilter:
+                              properties:
+                                caseSensitive:
+                                  type: boolean
+                                enabled:
+                                  type: boolean
+                                negate:
+                                  type: boolean
+                                operator:
+                                  enum:
+                                  - BEGINS_WITH
+                                  - ENDS_WITH
+                                  - CONTAINS
+                                  - REGEX_MATCHES
+                                  - STRING_EQUALS
+                                  type: string
+                                value:
+                                  type: string
+                              required:
+                              - caseSensitive
+                              - enabled
+                              - negate
+                              - operator
+                              - value
+                              type: object
+                            metadataFilter:
+                              properties:
+                                metadataFilterItems:
+                                  items:
+                                    properties:
+                                      metadataKey:
+                                        type: string
+                                      metadataValue:
+                                        type: string
+                                    required:
+                                    - metadataKey
+                                    - metadataValue
+                                    type: object
+                                  type: array
+                              required:
+                              - metadataFilterItems
+                              type: object
+                            titleFilter:
+                              properties:
+                                caseSensitive:
+                                  type: boolean
+                                enabled:
+                                  type: boolean
+                                negate:
+                                  type: boolean
+                                operator:
+                                  enum:
+                                  - BEGINS_WITH
+                                  - ENDS_WITH
+                                  - CONTAINS
+                                  - REGEX_MATCHES
+                                  - STRING_EQUALS
+                                  type: string
+                                value:
+                                  type: string
+                              required:
+                              - caseSensitive
+                              - enabled
+                              - negate
+                              - operator
+                              - value
+                              type: object
+                          type: object
+                        predefinedFilter:
+                          properties:
+                            eventType:
+                              enum:
+                              - EC2_HIGH_CPU
+                              - OSI_HIGH_CPU
+                              - ELB_HIGH_BACKEND_ERROR_RATE
+                              - PROCESS_NA_HIGH_CONN_FAIL_RATE
+                              - CUSTOM_APP_CRASH_RATE_INCREASED
+                              - CUSTOM_APPLICATION_ERROR_RATE_INCREASED
+                              - CUSTOM_APPLICATION_SLOWDOWN
+                              - CUSTOM_APPLICATION_UNEXPECTED_LOW_LOAD
+                              - CUSTOM_APPLICATION_UNEXPECTED_HIGH_LOAD
+                              - DCRUM_SVC_PERFORMANCE_DEGRADATION
+                              - DCRUM_SVC_LOW_AVAILABILITY
+                              - ESXI_GUEST_CPU_LIMIT_REACHED
+                              - ESXI_GUEST_ACTIVE_SWAP_WAIT
+                              - ESXI_HOST_CPU_SATURATION
+                              - ESXI_HOST_MEMORY_SATURATION
+                              type: string
+                            negate:
+                              type: boolean
+                          required:
+                          - eventType
+                          - negate
+                          type: object
+                        type:
+                          enum:
+                          - PREDEFINED
+                          - CUSTOM
+                          type: string
+                      required:
+                      - type
+                      type: object
+                    type: array
+                  managementZone:
+                    type: string
                   name:
                     type: string
+                  severityRules:
+                    items:
+                      properties:
+                        delayInMinutes:
+                          format: int32
+                          type: integer
+                        severityLevel:
+                          enum:
+                          - AVAILABILITY
+                          - CUSTOM_ALERT
+                          - ERRORS
+                          - MONITORING_UNAVAILABLE
+                          - PERFORMANCE
+                          - RESOURCE_CONTENTION
+                          type: string
+                        tagFilter:
+                          items:
+                            type: string
+                          type: array
+                        tagFilterIncludeMode:
+                          enum:
+                          - NONE
+                          - INCLUDE_ANY
+                          - INCLUDE_ALL
+                          type: string
+                      required:
+                      - delayInMinutes
+                      - severityLevel
+                      - tagFilterIncludeMode
+                      type: object
+                    type: array
                 required:
                 - name
                 type: object
