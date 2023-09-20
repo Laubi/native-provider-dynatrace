@@ -4,13 +4,18 @@ metadata:
   namespace: crossplane-system
   name: example-provider-secret
 type: Opaque
-data:
-  # credentials: BASE64ENCODED_PROVIDER_CREDS
+stringData:
+  credentials: |
+    {
+      "url": "https://tenant.dynatrace.com",
+      "token": "dt0c01.YOUR-TOKEN"
+    }
+
 ---
 apiVersion: dynatrace.crossplane.io/v1alpha1
 kind: ProviderConfig
 metadata:
-  name: example
+  name: dynatrace-provider
 spec:
   credentials:
     source: Secret

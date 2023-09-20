@@ -39,4 +39,4 @@ spec:
         - "asdf:fdas"
 
   providerConfigRef:
-    name: example
+    name: dynatrace-provider
