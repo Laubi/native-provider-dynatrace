@@ -1,0 +1,18 @@
+apiVersion: notification.dynatrace.crossplane.io/v1alpha1
+kind: Email
+metadata:
+  name: email-notification
+spec:
+  forProvider:
+    displayName: My email notification
+    enabled: true
+    sendEmailWhenProblemIsClosed: true
+    alertingProfile: "3ff2d52f-326c-333f-b93f-bbf75c30ee2c"
+    subject: My errors
+    body: "{ProblemDetailsHTML}"
+    to:
+    - david.laubreiter@dynatrace.com
+
+
+  providerConfigRef:
+    name: dynatrace-provider
