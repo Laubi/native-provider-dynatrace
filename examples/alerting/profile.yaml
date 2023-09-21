@@ -1,7 +1,7 @@
 apiVersion: alerting.dynatrace.crossplane.io/v1alpha1
 kind: Profile
 metadata:
-  name: example
+  name: my-profile
 spec:
   forProvider:
     name: "My name"

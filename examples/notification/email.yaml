@@ -4,15 +4,17 @@ metadata:
   name: email-notification
 spec:
   forProvider:
+    alertingProfileRef:
+      name: my-profile
+
     displayName: My email notification
     enabled: true
     sendEmailWhenProblemIsClosed: true
-    alertingProfileRef:
-      name: example
-
     subject: My errors
     body: "{ProblemDetailsHTML}"
     to:
+    - david.laubreiter@dynatrace.com
+    bcc:
     - david.laubreiter@dynatrace.com
 
 
