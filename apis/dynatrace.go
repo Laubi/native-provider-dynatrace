@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	alertingalpha1 "github.com/crossplane/provider-dynatrace/apis/alerting/v1alpha1"
+	notificationalpha1 "github.com/crossplane/provider-dynatrace/apis/notification/v1alpha1"
 	dynatracev1alpha1 "github.com/crossplane/provider-dynatrace/apis/v1alpha1"
 )
 
@@ -29,6 +30,7 @@ func init() {
 	AddToSchemes = append(AddToSchemes,
 		dynatracev1alpha1.SchemeBuilder.AddToScheme,
 		alertingalpha1.SchemeBuilder.AddToScheme,
+		notificationalpha1.SchemeBuilder.AddToScheme,
 	)
 }
 
