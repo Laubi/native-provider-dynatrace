@@ -39,7 +39,12 @@ type EmailParameters struct {
 	Subject                      string `json:"subject"`
 	SendEmailWhenProblemIsClosed bool   `json:"sendEmailWhenProblemIsClosed"`
 	Body                         string `json:"body"`
-	AlertingProfile              string `json:"alertingProfile"`
+
+	// +crossplane:generate:reference:type=github.com/crossplane/provider-dynatrace/apis/alerting/v1alpha1.Profile
+	// +optional
+	AlertingProfile         string          `json:"alertingProfile"`
+	AlertingProfileRef      *xpv1.Reference `json:"alertingProfileRef,omitempty"`
+	AlertingProfileSelector *xpv1.Selector  `json:"alertingProfileSelector,omitempty"`
 }
 
 // EmailObservation are the observable fields of a Email.

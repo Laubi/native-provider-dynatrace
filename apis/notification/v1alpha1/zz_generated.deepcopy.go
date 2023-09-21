@@ -22,6 +22,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"github.com/crossplane/crossplane-runtime/apis/common/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -116,6 +117,16 @@ func (in *EmailParameters) DeepCopyInto(out *EmailParameters) {
 		in, out := &in.Bcc, &out.Bcc
 		*out = make([]string, len(*in))
 		copy(*out, *in)
+	}
+	if in.AlertingProfileRef != nil {
+		in, out := &in.AlertingProfileRef, &out.AlertingProfileRef
+		*out = new(v1.Reference)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.AlertingProfileSelector != nil {
+		in, out := &in.AlertingProfileSelector, &out.AlertingProfileSelector
+		*out = new(v1.Selector)
+		(*in).DeepCopyInto(*out)
 	}
 }
 
