@@ -212,6 +212,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 }
 
 func crdToDto(v v1alpha1.EmailParameters) notifications.Notification {
+
 	n := notifications.Notification{
 		Type:      notifications.Types.Email,
 		Enabled:   v.Enabled,

@@ -7,7 +7,9 @@ spec:
     displayName: My email notification
     enabled: true
     sendEmailWhenProblemIsClosed: true
-    alertingProfile: "3ff2d52f-326c-333f-b93f-bbf75c30ee2c"
+    alertingProfileRef:
+      name: example
+
     subject: My errors
     body: "{ProblemDetailsHTML}"
     to:
