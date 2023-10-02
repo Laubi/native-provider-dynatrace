@@ -94,3 +94,79 @@ func (mg *Email) SetPublishConnectionDetailsTo(r *xpv1.PublishConnectionDetailsT
 func (mg *Email) SetWriteConnectionSecretToReference(r *xpv1.SecretReference) {
 	mg.Spec.WriteConnectionSecretToReference = r
 }
+
+// GetCondition of this Slack.
+func (mg *Slack) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
+	return mg.Status.GetCondition(ct)
+}
+
+// GetDeletionPolicy of this Slack.
+func (mg *Slack) GetDeletionPolicy() xpv1.DeletionPolicy {
+	return mg.Spec.DeletionPolicy
+}
+
+// GetManagementPolicies of this Slack.
+func (mg *Slack) GetManagementPolicies() xpv1.ManagementPolicies {
+	return mg.Spec.ManagementPolicies
+}
+
+// GetProviderConfigReference of this Slack.
+func (mg *Slack) GetProviderConfigReference() *xpv1.Reference {
+	return mg.Spec.ProviderConfigReference
+}
+
+/*
+GetProviderReference of this Slack.
+Deprecated: Use GetProviderConfigReference.
+*/
+func (mg *Slack) GetProviderReference() *xpv1.Reference {
+	return mg.Spec.ProviderReference
+}
+
+// GetPublishConnectionDetailsTo of this Slack.
+func (mg *Slack) GetPublishConnectionDetailsTo() *xpv1.PublishConnectionDetailsTo {
+	return mg.Spec.PublishConnectionDetailsTo
+}
+
+// GetWriteConnectionSecretToReference of this Slack.
+func (mg *Slack) GetWriteConnectionSecretToReference() *xpv1.SecretReference {
+	return mg.Spec.WriteConnectionSecretToReference
+}
+
+// SetConditions of this Slack.
+func (mg *Slack) SetConditions(c ...xpv1.Condition) {
+	mg.Status.SetConditions(c...)
+}
+
+// SetDeletionPolicy of this Slack.
+func (mg *Slack) SetDeletionPolicy(r xpv1.DeletionPolicy) {
+	mg.Spec.DeletionPolicy = r
+}
+
+// SetManagementPolicies of this Slack.
+func (mg *Slack) SetManagementPolicies(r xpv1.ManagementPolicies) {
+	mg.Spec.ManagementPolicies = r
+}
+
+// SetProviderConfigReference of this Slack.
+func (mg *Slack) SetProviderConfigReference(r *xpv1.Reference) {
+	mg.Spec.ProviderConfigReference = r
+}
+
+/*
+SetProviderReference of this Slack.
+Deprecated: Use SetProviderConfigReference.
+*/
+func (mg *Slack) SetProviderReference(r *xpv1.Reference) {
+	mg.Spec.ProviderReference = r
+}
+
+// SetPublishConnectionDetailsTo of this Slack.
+func (mg *Slack) SetPublishConnectionDetailsTo(r *xpv1.PublishConnectionDetailsTo) {
+	mg.Spec.PublishConnectionDetailsTo = r
+}
+
+// SetWriteConnectionSecretToReference of this Slack.
+func (mg *Slack) SetWriteConnectionSecretToReference(r *xpv1.SecretReference) {
+	mg.Spec.WriteConnectionSecretToReference = r
+}

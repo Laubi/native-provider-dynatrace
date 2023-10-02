@@ -50,3 +50,29 @@ func (mg *Email) ResolveReferences(ctx context.Context, c client.Reader) error {
 
 	return nil
 }
+
+// ResolveReferences of this Slack.
+func (mg *Slack) ResolveReferences(ctx context.Context, c client.Reader) error {
+	r := reference.NewAPIResolver(c, mg)
+
+	var rsp reference.ResolutionResponse
+	var err error
+
+	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
+		CurrentValue: reference.FromPtrValue(mg.Spec.ForProvider.AlertingProfile),
+		Extract:      v1alpha1.ProfileID(),
+		Reference:    mg.Spec.ForProvider.AlertingProfileRef,
+		Selector:     mg.Spec.ForProvider.AlertingProfileSelector,
+		To: reference.To{
+			List:    &v1alpha1.ProfileList{},
+			Managed: &v1alpha1.Profile{},
+		},
+	})
+	if err != nil {
+		return errors.Wrap(err, "mg.Spec.ForProvider.AlertingProfile")
+	}
+	mg.Spec.ForProvider.AlertingProfile = reference.ToPtrValue(rsp.ResolvedValue)
+	mg.Spec.ForProvider.AlertingProfileRef = rsp.ResolvedReference
+
+	return nil
+}

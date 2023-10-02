@@ -14,5 +14,5 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package notification contains group Notification API versions
+// Package notification contains group notification API versions
 package notification
