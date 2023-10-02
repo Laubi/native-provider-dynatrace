@@ -18,7 +18,6 @@ package email
 
 import (
 	"context"
-	"fmt"
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/provider-dynatrace/internal/credentials"
@@ -175,12 +174,6 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	local := crdToDto(cr.Spec.ForProvider)
 	if diff := cmp.Diff(n, local, cmpopts.IgnoreFields(notifications.Notification{}, "LegacyID"), cmpopts.EquateEmpty()); diff != "" {
 
-		fmt.Println()
-		fmt.Println()
-		fmt.Println(diff)
-		fmt.Println()
-		fmt.Println()
-
 		return managed.ExternalObservation{
 			ResourceExists:   true,
 			ResourceUpToDate: false,
@@ -200,6 +193,8 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotEmail)
 	}
 
+	cr.Status.SetConditions(xpv1.Creating())
+
 	n := crdToDto(cr.Spec.ForProvider)
 	apiResp, err := c.service.client.Create(&n)
 	if err != nil {
@@ -217,7 +212,7 @@ func crdToDto(v v1alpha1.EmailParameters) notifications.Notification {
 		Type:      notifications.Types.Email,
 		Enabled:   v.Enabled,
 		Name:      v.DisplayName,
-		ProfileID: v.AlertingProfile,
+		ProfileID: *v.AlertingProfile,
 
 		Email: &notificationSettings.Email{
 			Subject:              v.Subject,
@@ -254,5 +249,10 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) error {
 	}
 
 	err := c.service.client.Delete(meta.GetExternalName(cr))
-	return err
+	if err != nil {
+		return err
+	}
+
+	cr.Status.SetConditions(xpv1.Deleting())
+	return nil
 }

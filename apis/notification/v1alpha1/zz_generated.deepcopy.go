@@ -118,6 +118,11 @@ func (in *EmailParameters) DeepCopyInto(out *EmailParameters) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.AlertingProfile != nil {
+		in, out := &in.AlertingProfile, &out.AlertingProfile
+		*out = new(string)
+		**out = **in
+	}
 	if in.AlertingProfileRef != nil {
 		in, out := &in.AlertingProfileRef, &out.AlertingProfileRef
 		*out = new(v1.Reference)

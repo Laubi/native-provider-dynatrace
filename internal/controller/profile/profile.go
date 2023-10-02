@@ -18,17 +18,13 @@ package profile
 
 import (
 	"context"
-	json2 "encoding/json"
-	"fmt"
 	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
-	"github.com/crossplane/crossplane-runtime/pkg/logging"
 	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/provider-dynatrace/internal/credentials"
 	profile "github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/api/builtin/alerting/profile"
 	profileSettings "github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/api/builtin/alerting/profile/settings"
 	"github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/rest"
 	"github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/settings"
-	"github.com/go-logr/logr"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
@@ -164,14 +160,9 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	id := meta.GetExternalName(cr)
 
-	log := logging.NewLogrLogger(logr.FromContextOrDiscard(ctx))
-	log = log.WithValues("id", id)
-
 	var p profileSettings.Profile
 	err := c.service.client.Get(id, &p)
 	if err != nil {
-		log.Info("Failed to GET profile", "err", err, "prettyerror", PrettyPrint(err))
-
 		var restError rest.Error
 		if errors.As(err, &restError) {
 			if restError.Code == http.StatusNotFound {
@@ -179,12 +170,12 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 			}
 		}
 
-		PrettyPrint(err)
 		return managed.ExternalObservation{}, err
 	}
 
 	// object exists -> check if updated
 	cr.Status.SetConditions(xpv1.Available())
+	cr.Status.AtProvider.Id = id
 
 	local, err := crdToDto(cr.Spec.ForProvider)
 	if err != nil {
@@ -192,8 +183,7 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	if diff := cmp.Diff(p, local, cmpopts.IgnoreFields(profileSettings.Profile{}, "LegacyID"), cmpopts.EquateEmpty()); diff != "" {
-		log.Debug("Difference between local and remote object", "local", local, "remote", p, "diff", diff)
-		fmt.Println(diff)
+		cr.SetConditions(xpv1.Unavailable())
 		return managed.ExternalObservation{
 			ResourceExists:   true,
 			ResourceUpToDate: false,
@@ -213,9 +203,6 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotProfile)
 	}
 
-	log := logging.NewLogrLogger(logr.FromContextOrDiscard(ctx))
-	log.Info("Creating profile", "id", meta.GetExternalName(cr))
-
 	p, err := crdToDto(cr.Spec.ForProvider)
 	if err != nil {
 		return managed.ExternalCreation{}, err
@@ -225,13 +212,10 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.Wrap(err, "failed to create")
 	}
 
-	log.Debug("returned obj", "obj", createResp)
 	meta.SetExternalName(cr, createResp.ID)
-	log.Debug("Updated cr status", "externalname", meta.GetExternalName(cr))
+	cr.Status.SetConditions(xpv1.Creating())
 
-	return managed.ExternalCreation{
-		ConnectionDetails: managed.ConnectionDetails{},
-	}, nil
+	return managed.ExternalCreation{}, nil
 }
 
 func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
@@ -260,21 +244,12 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) error {
 	}
 
 	err := c.service.client.Delete(meta.GetExternalName(cr))
-	return err
-}
-
-func PrettyPrint(data any) any {
-	var p []byte
-	p, err := json2.MarshalIndent(data, "", "\t")
 	if err != nil {
-		panic(err)
+		return err
 	}
+	cr.SetConditions(xpv1.Deleting())
 
-	if err := json2.Unmarshal(p, &data); err != nil {
-		panic(err)
-	}
-
-	return data
+	return nil
 }
 
 func crdToDto(p v1alpha1.ProfileParameters) (profileSettings.Profile, error) {

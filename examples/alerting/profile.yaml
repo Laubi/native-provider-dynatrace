@@ -6,37 +6,37 @@ spec:
   forProvider:
     name: "My name"
     eventFilters:
-      - type: PREDEFINED
-        predefinedFilter:
-          eventType: CUSTOM_APP_CRASH_RATE_INCREASED
-          negate: true
-      - type: CUSTOM
-        customFilter:
-          titleFilter:
-            caseSensitive: true
-            enabled: true
-            negate: false
-            operator: BEGINS_WITH
-            value: asdf
-      - type: CUSTOM
-        customFilter:
-          metadataFilter:
-            metadataFilterItems:
-              - metadataKey: KEY
-                metadataValue:  VAL
-          descriptionFilter:
-            caseSensitive: true
-            enabled: true
-            negate: false
-            operator: BEGINS_WITH
-            value: value
+    - type: PREDEFINED
+      predefinedFilter:
+        eventType: CUSTOM_APP_CRASH_RATE_INCREASED
+        negate: true
+    - type: CUSTOM
+      customFilter:
+        titleFilter:
+          caseSensitive: true
+          enabled: true
+          negate: false
+          operator: BEGINS_WITH
+          value: asdf
+    - type: CUSTOM
+      customFilter:
+        metadataFilter:
+          metadataFilterItems:
+          - metadataKey: KEY
+            metadataValue: VAL
+        descriptionFilter:
+          caseSensitive: true
+          enabled: true
+          negate: false
+          operator: BEGINS_WITH
+          value: value
 
     severityRules:
-      - delayInMinutes: 45
-        severityLevel: MONITORING_UNAVAILABLE
-        tagFilterIncludeMode: INCLUDE_ALL
-        tagFilter:
-        - "asdf:fdas"
+    - delayInMinutes: 45
+      severityLevel: MONITORING_UNAVAILABLE
+      tagFilterIncludeMode: INCLUDE_ALL
+      tagFilter:
+      - "asdf:fdas"
 
   providerConfigRef:
     name: dynatrace-provider

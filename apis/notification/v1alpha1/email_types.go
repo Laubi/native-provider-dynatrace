@@ -41,10 +41,17 @@ type EmailParameters struct {
 	Body                         string `json:"body"`
 
 	// +crossplane:generate:reference:type=github.com/crossplane/provider-dynatrace/apis/alerting/v1alpha1.Profile
+	// +crossplane:generate:reference:extractor=github.com/crossplane/provider-dynatrace/apis/alerting/v1alpha1.ProfileID()
 	// +optional
-	AlertingProfile         string          `json:"alertingProfile"`
-	AlertingProfileRef      *xpv1.Reference `json:"alertingProfileRef,omitempty"`
-	AlertingProfileSelector *xpv1.Selector  `json:"alertingProfileSelector,omitempty"`
+	AlertingProfile *string `json:"alertingProfile"`
+
+	// +optional
+	// +immutable
+	AlertingProfileRef *xpv1.Reference `json:"alertingProfileRef,omitempty"`
+
+	// +optional
+	// +immutable
+	AlertingProfileSelector *xpv1.Selector `json:"alertingProfileSelector,omitempty"`
 }
 
 // EmailObservation are the observable fields of a Email.
