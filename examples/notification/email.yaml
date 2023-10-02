@@ -7,10 +7,12 @@ spec:
     alertingProfileRef:
       name: my-profile
 
+    sendEmailWhenProblemIsClosed: true
+    subject: asdf
+
     displayName: My email notification
     enabled: true
-    sendEmailWhenProblemIsClosed: true
-    subject: My errors
+
     body: "{ProblemDetailsHTML}"
     to:
     - david.laubreiter@dynatrace.com

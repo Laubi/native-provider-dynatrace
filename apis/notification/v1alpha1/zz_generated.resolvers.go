@@ -33,8 +33,8 @@ func (mg *Email) ResolveReferences(ctx context.Context, c client.Reader) error {
 	var err error
 
 	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
-		CurrentValue: mg.Spec.ForProvider.AlertingProfile,
-		Extract:      reference.ExternalName(),
+		CurrentValue: reference.FromPtrValue(mg.Spec.ForProvider.AlertingProfile),
+		Extract:      v1alpha1.ProfileID(),
 		Reference:    mg.Spec.ForProvider.AlertingProfileRef,
 		Selector:     mg.Spec.ForProvider.AlertingProfileSelector,
 		To: reference.To{
@@ -45,7 +45,7 @@ func (mg *Email) ResolveReferences(ctx context.Context, c client.Reader) error {
 	if err != nil {
 		return errors.Wrap(err, "mg.Spec.ForProvider.AlertingProfile")
 	}
-	mg.Spec.ForProvider.AlertingProfile = rsp.ResolvedValue
+	mg.Spec.ForProvider.AlertingProfile = reference.ToPtrValue(rsp.ResolvedValue)
 	mg.Spec.ForProvider.AlertingProfileRef = rsp.ResolvedReference
 
 	return nil
