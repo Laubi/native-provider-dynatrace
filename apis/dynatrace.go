@@ -22,6 +22,7 @@ import (
 
 	alertingalpha1 "github.com/crossplane/provider-dynatrace/apis/alerting/v1alpha1"
 	notificationalpha1 "github.com/crossplane/provider-dynatrace/apis/notification/v1alpha1"
+	tagsv1alpha1 "github.com/crossplane/provider-dynatrace/apis/tags/v1alpha1"
 	dynatracev1alpha1 "github.com/crossplane/provider-dynatrace/apis/v1alpha1"
 )
 
@@ -31,6 +32,7 @@ func init() {
 		dynatracev1alpha1.SchemeBuilder.AddToScheme,
 		alertingalpha1.SchemeBuilder.AddToScheme,
 		notificationalpha1.SchemeBuilder.AddToScheme,
+		tagsv1alpha1.SchemeBuilder.AddToScheme,
 	)
 }
 

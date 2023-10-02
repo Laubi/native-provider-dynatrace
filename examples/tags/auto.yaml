@@ -1,0 +1,24 @@
+apiVersion: tags.dynatrace.crossplane.io/v1alpha1
+kind: AutoTag
+metadata:
+  name: email-notification
+spec:
+  forProvider:
+    name: My Tag
+    description: My description
+
+    rules:
+      - enabled: true
+        tagValueNormalization: Leave text as-is
+        type: ME
+        appliesTo: HOST
+        hostToPgPropagation: true
+
+        conditions:
+          - operator: EQUALS
+            property: KUBERNETES_NODE_NAME
+            stringValue: asdf
+            caseSensitive: true
+
+  providerConfigRef:
+    name: dynatrace-provider
