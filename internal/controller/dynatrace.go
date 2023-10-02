@@ -18,6 +18,7 @@ package controller
 
 import (
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
+	"github.com/crossplane/provider-dynatrace/internal/controller/autotag"
 	"github.com/crossplane/provider-dynatrace/internal/controller/email"
 	"github.com/crossplane/provider-dynatrace/internal/controller/slack"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -34,6 +35,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		profile.Setup,
 		email.Setup,
 		slack.Setup,
+		autotag.Setup,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
