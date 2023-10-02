@@ -1,5 +1,5 @@
 apiVersion: notification.dynatrace.crossplane.io/v1alpha1
-kind: Email
+kind: Slack
 metadata:
   name: email-notification
 spec:
@@ -10,17 +10,12 @@ spec:
         resolve: Always
         resolution: Required
 
-    sendEmailWhenProblemIsClosed: true
-    subject: asdf
+    active: true
 
-    displayName: My email notification
-    enabled: true
-
-    body: "{ProblemDetailsHTML}"
-    to:
-    - david.laubreiter@dynatrace.com
-    bcc:
-    - david.laubreiter@dynatrace.com
+    name: Something went wrong!
+    channel: "#general"
+    message: "Some message"
+    url: "https://some-url.com"
 
 
   providerConfigRef:
