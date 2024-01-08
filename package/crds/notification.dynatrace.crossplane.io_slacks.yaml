@@ -67,12 +67,11 @@ spec:
               forProvider:
                 description: SlackParameters are the configurable fields of a Slack.
                 properties:
-                  active:
-                    type: boolean
                   alertingProfile:
+                    description: ID of the associated alerting profile.
                     type: string
                   alertingProfileRef:
-                    description: A Reference to a named object.
+                    description: A referencer to retrieve the ID of an alerting profile.
                     properties:
                       name:
                         description: Name of the referenced object.
@@ -106,7 +105,8 @@ spec:
                     - name
                     type: object
                   alertingProfileSelector:
-                    description: A Selector selects an object.
+                    description: A selector to select a referencer to retrieve the
+                      ID of an alerting profile.
                     properties:
                       matchControllerRef:
                         description: MatchControllerRef ensures an object with the
@@ -145,15 +145,23 @@ spec:
                         type: object
                     type: object
                   channel:
+                    description: Channel contains which channel the notification should
+                      be posted to.
                     type: string
+                  enable:
+                    default: true
+                    description: Whether this Slack notification is enabled.
+                    type: boolean
                   message:
+                    description: The content of the message that will be postet.
                     type: string
                   name:
+                    description: The name of the Slack notification.
                     type: string
                   url:
+                    description: The URL to the Slack webhook.
                     type: string
                 required:
-                - active
                 - channel
                 - message
                 - name
@@ -363,6 +371,8 @@ spec:
                 description: SlackObservation are the observable fields of a Slack.
                 properties:
                   id:
+                    type: string
+                  obfuscatedUrl:
                     type: string
                 type: object
               conditions:

@@ -27,21 +27,35 @@ import (
 
 // SlackParameters are the configurable fields of a Slack.
 type SlackParameters struct {
-	Name    string `json:"name"`
-	Active  bool   `json:"active"`
-	Url     string `json:"url"`
+	// The name of the Slack notification.
+	Name string `json:"name"`
+
+	// Whether this Slack notification is enabled.
+	// +kubebuilder:default=true
+	// +optional
+	Enable bool `json:"enable"`
+
+	// The URL to the Slack webhook.
+	Url string `json:"url"`
+
+	// Channel contains which channel the notification should be posted to.
 	Channel string `json:"channel"`
+
+	// The content of the message that will be postet.
 	Message string `json:"message"`
 
+	// ID of the associated alerting profile.
 	// +crossplane:generate:reference:type=github.com/crossplane/provider-dynatrace/apis/alerting/v1alpha1.Profile
 	// +crossplane:generate:reference:extractor=github.com/crossplane/provider-dynatrace/apis/alerting/v1alpha1.ProfileID()
 	// +optional
 	AlertingProfile *string `json:"alertingProfile"`
 
+	// A referencer to retrieve the ID of an alerting profile.
 	// +optional
 	// +immutable
 	AlertingProfileRef *xpv1.Reference `json:"alertingProfileRef,omitempty"`
 
+	// A selector to select a referencer to retrieve the ID of an alerting profile.
 	// +optional
 	// +immutable
 	AlertingProfileSelector *xpv1.Selector `json:"alertingProfileSelector,omitempty"`
@@ -49,7 +63,8 @@ type SlackParameters struct {
 
 // SlackObservation are the observable fields of a Slack.
 type SlackObservation struct {
-	ID string `json:"id,omitempty"`
+	ID            string  `json:"id,omitempty"`
+	ObfuscatedUrl *string `json:"obfuscatedUrl,omitempty"`
 }
 
 // A SlackSpec defines the desired state of a Slack.
