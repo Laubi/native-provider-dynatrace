@@ -169,9 +169,23 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	cr.Status.SetConditions(xpv1.Available())
+	cr.Status.AtProvider.ID = id
+
+	if cr.Status.AtProvider.ObfuscatedUrl == nil {
+		cr.Status.AtProvider.ObfuscatedUrl = &n.Slack.URL
+	}
 
 	local := crdToDto(cr.Spec.ForProvider)
-	if diff := cmp.Diff(n, local, cmpopts.IgnoreFields(notifications.Notification{}, "LegacyID"), cmpopts.EquateEmpty()); diff != "" {
+	if diff := cmp.Diff(n, local, cmpopts.IgnoreFields(notifications.Notification{}, "LegacyID"), cmpopts.IgnoreFields(notificationSettings.Slack{}, "URL"), cmpopts.EquateEmpty()); diff != "" {
+		return managed.ExternalObservation{
+			ResourceExists:   true,
+			ResourceUpToDate: false,
+			Diff:             diff,
+		}, nil
+	}
+
+	if diff := cmp.Diff(*cr.Status.AtProvider.ObfuscatedUrl, n.Slack.URL); diff != "" {
+		cr.Status.AtProvider.ObfuscatedUrl = nil
 
 		return managed.ExternalObservation{
 			ResourceExists:   true,
@@ -236,10 +250,9 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) error {
 }
 
 func crdToDto(v v1alpha1.SlackParameters) notifications.Notification {
-
-	n := notifications.Notification{
+	return notifications.Notification{
 		Type:      notifications.Types.Slack,
-		Enabled:   v.Active,
+		Enabled:   v.Enable,
 		Name:      v.Name,
 		ProfileID: *v.AlertingProfile,
 
@@ -249,5 +262,4 @@ func crdToDto(v v1alpha1.SlackParameters) notifications.Notification {
 			Message: v.Message,
 		},
 	}
-	return n
 }
