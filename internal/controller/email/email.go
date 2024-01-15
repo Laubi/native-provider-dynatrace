@@ -170,6 +170,7 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	}
 
 	cr.Status.SetConditions(xpv1.Available())
+	cr.Status.AtProvider.ID = id
 
 	local := crdToDto(cr.Spec.ForProvider)
 	if diff := cmp.Diff(n, local, cmpopts.IgnoreFields(notifications.Notification{}, "LegacyID"), cmpopts.EquateEmpty()); diff != "" {
@@ -211,7 +212,7 @@ func crdToDto(v v1alpha1.EmailParameters) notifications.Notification {
 	n := notifications.Notification{
 		Type:      notifications.Types.Email,
 		Enabled:   v.Enabled,
-		Name:      v.DisplayName,
+		Name:      v.Name,
 		ProfileID: *v.AlertingProfile,
 
 		Email: &notificationSettings.Email{
@@ -219,7 +220,7 @@ func crdToDto(v v1alpha1.EmailParameters) notifications.Notification {
 			Recipients:           v.To,
 			CCRecipients:         v.Cc,
 			BCCRecipients:        v.Bcc,
-			NotifyClosedProblems: v.SendEmailWhenProblemIsClosed,
+			NotifyClosedProblems: v.NotifyClosedProblems,
 			Body:                 v.Body,
 		},
 	}

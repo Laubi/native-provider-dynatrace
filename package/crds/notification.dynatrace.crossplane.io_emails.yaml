@@ -143,32 +143,41 @@ spec:
                         type: object
                     type: object
                   bcc:
+                    description: The BCC-recipients of this notification.
                     items:
                       type: string
                     type: array
                   body:
+                    description: The content of the Email to send.
                     type: string
                   cc:
+                    description: The CC-recipients of this notification.
                     items:
                       type: string
                     type: array
-                  displayName:
-                    type: string
                   enabled:
+                    default: true
+                    description: Whether this Email notification is enabled
                     type: boolean
-                  sendEmailWhenProblemIsClosed:
+                  name:
+                    description: The name of the Email notification
+                    type: string
+                  notifyClosedProblems:
+                    default: true
+                    description: Send an email if the problem is closed.
                     type: boolean
                   subject:
+                    description: The subject of this notification
                     type: string
                   to:
+                    description: The primary recipients of this notification as email
+                      addresses.
                     items:
                       type: string
                     type: array
                 required:
                 - body
-                - displayName
-                - enabled
-                - sendEmailWhenProblemIsClosed
+                - name
                 - subject
                 - to
                 type: object
@@ -374,6 +383,11 @@ spec:
             properties:
               atProvider:
                 description: EmailObservation are the observable fields of a Email.
+                properties:
+                  ID:
+                    type: string
+                required:
+                - ID
                 type: object
               conditions:
                 description: Conditions of the resource.
