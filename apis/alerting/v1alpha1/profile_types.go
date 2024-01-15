@@ -80,6 +80,7 @@ const (
 type MetadataFilterItem struct {
 	MetadataKey   string `json:"metadataKey"`   // GET /api/v2/eventProperties for list of available keys
 	MetadataValue string `json:"metadataValue"` // Value
+	Negate        bool   `json:"negate"`        // Negate the operator
 }
 
 type MetadataFilter struct {
