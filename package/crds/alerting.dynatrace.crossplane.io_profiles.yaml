@@ -106,9 +106,12 @@ spec:
                                         type: string
                                       metadataValue:
                                         type: string
+                                      negate:
+                                        type: boolean
                                     required:
                                     - metadataKey
                                     - metadataValue
+                                    - negate
                                     type: object
                                   type: array
                               required:
