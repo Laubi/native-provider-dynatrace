@@ -27,18 +27,35 @@ import (
 
 // EmailParameters are the configurable fields of a Email.
 type EmailParameters struct {
-	Enabled     bool   `json:"enabled"`
-	DisplayName string `json:"displayName"`
+	// Whether this Email notification is enabled
+	// +kubebuilder:default=true
+	// +optional
+	Enabled bool `json:"enabled"`
 
+	// The name of the Email notification
+	Name string `json:"name"`
+
+	// The subject of this notification
+	Subject string `json:"subject"`
+
+	// Send an email if the problem is closed.
+	// +kubebuilder:default=true
+	// +optional
+	NotifyClosedProblems bool `json:"notifyClosedProblems"`
+
+	// The content of the Email to send.
+	Body string `json:"body"`
+
+	// The primary recipients of this notification as email addresses.
 	To []string `json:"to"`
-	// +optional
-	Cc []string `json:"cc"`
-	// +optional
-	Bcc []string `json:"bcc"`
 
-	Subject                      string `json:"subject"`
-	SendEmailWhenProblemIsClosed bool   `json:"sendEmailWhenProblemIsClosed"`
-	Body                         string `json:"body"`
+	// The CC-recipients of this notification.
+	// +optional
+	Cc []string `json:"cc,omitempty"`
+
+	// The BCC-recipients of this notification.
+	// +optional
+	Bcc []string `json:"bcc,omitempty"`
 
 	// +crossplane:generate:reference:type=github.com/crossplane/provider-dynatrace/apis/alerting/v1alpha1.Profile
 	// +crossplane:generate:reference:extractor=github.com/crossplane/provider-dynatrace/apis/alerting/v1alpha1.ProfileID()
@@ -56,6 +73,7 @@ type EmailParameters struct {
 
 // EmailObservation are the observable fields of a Email.
 type EmailObservation struct {
+	ID string `json:"ID"`
 }
 
 // A EmailSpec defines the desired state of a Email.
