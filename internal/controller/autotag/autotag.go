@@ -23,7 +23,7 @@ import (
 	"github.com/crossplane/provider-dynatrace/internal/credentials"
 	"github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/api/builtin/problem/notifications"
 	"github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/api/builtin/tags/autotagging"
-	autotaggingsettings "github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/api/builtin/tags/autotagging/settings"
+	autotaggingservice "github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/api/builtin/tags/autotagging/settings"
 	"github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/rest"
 	"github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/settings"
 	"github.com/google/go-cmp/cmp"
@@ -56,20 +56,13 @@ const (
 	errNewClient = "cannot create new Service"
 )
 
-// A NoOpService does nothing.
-type service struct {
-	client settings.CRUDService[*autotaggingsettings.Settings]
-}
-
-func newService(data []byte) (*service, error) {
+func newService(data []byte) (settings.CRUDService[*autotaggingservice.Settings], error) {
 	c, err := credentials.Unmarshal(data)
 	if err != nil {
 		return nil, err
 	}
 
-	return &service{
-		client: autotagging.Service(c),
-	}, nil
+	return autotagging.Service(c), nil
 }
 
 // Setup adds a controller that reconciles AutoTag managed resources.
@@ -105,7 +98,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 type connector struct {
 	kube         client.Client
 	usage        resource.Tracker
-	newServiceFn func(creds []byte) (*service, error)
+	newServiceFn func(creds []byte) (settings.CRUDService[*autotaggingservice.Settings], error)
 }
 
 // Connect typically produces an ExternalClient by:
@@ -139,7 +132,7 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 		return nil, errors.Wrap(err, errNewClient)
 	}
 
-	return &external{service: svc}, nil
+	return &external{client: svc}, nil
 }
 
 // An ExternalClient observes, then either creates, updates, or deletes an
@@ -147,18 +140,18 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 type external struct {
 	// A 'client' used to connect to the external resource API. In practice this
 	// would be something like an AWS SDK client.
-	service *service
+	client settings.CRUDService[*autotaggingservice.Settings]
 }
 
-func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
+func (c *external) Observe(_ context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
 	cr, ok := mg.(*v1alpha1.AutoTag)
 	if !ok {
 		return managed.ExternalObservation{}, errors.New(errNotAutoTag)
 	}
 
 	id := meta.GetExternalName(cr)
-	var autosettings autotaggingsettings.Settings
-	err := c.service.client.Get(id, &autosettings)
+	var autosettings autotaggingservice.Settings
+	err := c.client.Get(id, &autosettings)
 	if err != nil {
 		var restError rest.Error
 		if errors.As(err, &restError) {
@@ -197,7 +190,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	cr.Status.SetConditions(xpv1.Creating())
 
 	n := crdToDto(cr.Spec.ForProvider)
-	apiResp, err := c.service.client.Create(&n)
+	apiResp, err := c.client.Create(&n)
 	if err != nil {
 		return managed.ExternalCreation{}, err
 	}
@@ -215,7 +208,7 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	id := meta.GetExternalName(cr)
 	n := crdToDto(cr.Spec.ForProvider)
-	err := c.service.client.Update(id, &n)
+	err := c.client.Update(id, &n)
 	if err != nil {
 		return managed.ExternalUpdate{}, err
 	}
@@ -229,7 +222,7 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) error {
 		return errors.New(errNotAutoTag)
 	}
 
-	err := c.service.client.Delete(meta.GetExternalName(cr))
+	err := c.client.Delete(meta.GetExternalName(cr))
 	if err != nil {
 		return err
 	}
