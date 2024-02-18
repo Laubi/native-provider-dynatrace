@@ -1,7 +1,7 @@
 apiVersion: notification.dynatrace.crossplane.io/v1alpha1
 kind: Slack
 metadata:
-  name: email-notification
+  name: slack-notification
 spec:
   forProvider:
     alertingProfileRef:
@@ -10,8 +10,7 @@ spec:
         resolve: Always
         resolution: Required
 
-    active: true
-
+    enable: true
     name: Something went wrong!
     channel: "#general"
     message: "Some message"

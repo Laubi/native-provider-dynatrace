@@ -18,18 +18,6 @@ spec:
           negate: false
           operator: BEGINS_WITH
           value: asdf
-    - type: CUSTOM
-      customFilter:
-        metadataFilter:
-          metadataFilterItems:
-          - metadataKey: KEY
-            metadataValue: VAL
-        descriptionFilter:
-          caseSensitive: true
-          enabled: true
-          negate: false
-          operator: BEGINS_WITH
-          value: value
 
     severityRules:
     - delayInMinutes: 45

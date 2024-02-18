@@ -10,17 +10,16 @@ spec:
         resolve: Always
         resolution: Required
 
-    sendEmailWhenProblemIsClosed: true
-    subject: asdf
-
-    displayName: My email notification
+    subject: My Subject
+    notifyClosedProblems: true
+    name: My email notification
     enabled: true
 
     body: "{ProblemDetailsHTML}"
     to:
-    - david.laubreiter@dynatrace.com
+    - crossplane-user@noreply.dynatrace.com
     bcc:
-    - david.laubreiter@dynatrace.com
+    - crossplane-user@noreply.dynatrace.com
 
 
   providerConfigRef:

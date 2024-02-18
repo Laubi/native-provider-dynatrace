@@ -1,6 +1,29 @@
 apiVersion: v1
 kind: Secret
 metadata:
+  name: dynatrace-provider-pull-secret
+type: Opaque
+stringData:
+  credentials: |
+    {
+      "auths": {
+        "https://ghrc.io": {}
+      }
+    }
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-dynatrace
+spec:
+  package: ghcr.io/laubi/provider-dynatrace:0.0.1
+  packagePullSecrets:
+  - name: dynatrace-provider-pull-secret
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
   namespace: crossplane-system
   name: example-provider-secret
 type: Opaque
