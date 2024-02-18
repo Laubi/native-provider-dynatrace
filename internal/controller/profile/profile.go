@@ -56,21 +56,14 @@ const (
 	errCredentials = "cannot unmarshal credentials"
 )
 
-// A service does something.
-type service struct {
-	client settings.CRUDService[*profileSettings.Profile]
-}
-
 var (
-	newProfileService = func(data []byte) (*service, error) {
+	newProfileService = func(data []byte) (settings.CRUDService[*profileSettings.Profile], error) {
 		c, err := credentials.Unmarshal(data)
 		if err != nil {
 			return nil, err
 		}
 
-		return &service{
-			client: profile.Service(c),
-		}, nil
+		return profile.Service(c), nil
 	}
 )
 
@@ -107,7 +100,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 type connector struct {
 	kube         client.Client
 	usage        resource.Tracker
-	newServiceFn func(creds []byte) (*service, error)
+	newServiceFn func(creds []byte) (settings.CRUDService[*profileSettings.Profile], error)
 }
 
 // Connect typically produces an ExternalClient by:
@@ -149,7 +142,7 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 type external struct {
 	// A 'client' used to connect to the external resource API. In practice this
 	// would be something like an AWS SDK client.
-	service *service
+	service settings.CRUDService[*profileSettings.Profile]
 }
 
 func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
@@ -161,7 +154,7 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 	id := meta.GetExternalName(cr)
 
 	var p profileSettings.Profile
-	err := c.service.client.Get(id, &p)
+	err := c.service.Get(id, &p)
 	if err != nil {
 		var restError rest.Error
 		if errors.As(err, &restError) {
@@ -207,7 +200,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	if err != nil {
 		return managed.ExternalCreation{}, err
 	}
-	createResp, err := c.service.client.Create(&p)
+	createResp, err := c.service.Create(&p)
 	if err != nil {
 		return managed.ExternalCreation{}, errors.Wrap(err, "failed to create")
 	}
@@ -229,7 +222,7 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalUpdate{}, err
 	}
 
-	err = c.service.client.Update(meta.GetExternalName(cr), &dto)
+	err = c.service.Update(meta.GetExternalName(cr), &dto)
 	if err != nil {
 		return managed.ExternalUpdate{}, err
 	}
@@ -243,7 +236,7 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) error {
 		return errors.New(errNotProfile)
 	}
 
-	err := c.service.client.Delete(meta.GetExternalName(cr))
+	err := c.service.Delete(meta.GetExternalName(cr))
 	if err != nil {
 		return err
 	}

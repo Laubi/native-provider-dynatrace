@@ -18,6 +18,8 @@ package profile
 
 import (
 	"context"
+	profileSettings "github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/api/builtin/alerting/profile/settings"
+	"github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/settings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -37,7 +39,7 @@ import (
 
 func TestObserve(t *testing.T) {
 	type fields struct {
-		service interface{}
+		service settings.CRUDService[*profileSettings.Profile]
 	}
 
 	type args struct {
