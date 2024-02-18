@@ -1,38 +1,22 @@
-# provider-dynatrace
+# Dynatrace Crossplane Provider
 
-`provider-dynatrace` is a minimal [Crossplane](https://crossplane.io/) Provider
-that is meant to be used as a dynatrace for implementing new Providers. It comes
-with the following features that are meant to be refactored:
+`provider-dynatrace` is a minimal [Crossplane](https://crossplane.io/) Provider to configure Dynatrace environments.
 
-- A `ProviderConfig` type that only points to a credentials `Secret`.
-- A `MyType` resource type that serves as an example managed resource.
-- A managed resource controller that reconciles `MyType` objects and simply
-  prints their configuration in its `Observe` method.
+Currently, only a small subset of configurations are supported:
+* Alerting Profiles
+* Notifications for Email and Slack
+* Auto-Tags
 
-## Developing
+## Developing & Contributing
 
-1. Use this repository as a dynatrace to create a new one.
-1. Run `make submodules` to initialize the "build" Make submodule we use for CI/CD.
-1. Rename the provider by running the following command:
-```shell
-  export provider_name=MyProvider # Camel case, e.g. GitHub
-  make provider.prepare provider=${provider_name}
-```
-4. Add your new type by running the following command:
-```shell
-  export group=sample # lower case e.g. core, cache, database, storage, etc.
-  export type=MyType # Camel casee.g. Bucket, Database, CacheCluster, etc.
-  make provider.addtype provider=${provider_name} group=${group} kind=${type}
-```
-5. Replace the *sample* group with your new group in apis/{provider}.go
-5. Replace the *mytype* type with your new type in internal/controller/{provider}.go
-5. Replace the default controller and ProviderConfig implementations with your own
-5. Run `make reviewable` to run code generation, linters, and tests.
-5. Run `make build` to build the provider.
-
-Refer to Crossplane's [CONTRIBUTING.md] file for more information on how the
+Refer to [our development documentation](DEVELOPING.MD) for more details on how to create a new resource.
+Furtheremore, refer to Crossplane's [CONTRIBUTING.md] file for more information on how the
 Crossplane community prefers to work. The [Provider Development][provider-dev]
 guide may also be of use.
+
+## Setting up the Dynatrace Crossplane Provider
+
+All necessary configs are available in [the examples](./examples) directory. 
 
 [CONTRIBUTING.md]: https://github.com/crossplane/crossplane/blob/master/CONTRIBUTING.md
 [provider-dev]: https://github.com/crossplane/crossplane/blob/master/contributing/guide-provider-development.md
