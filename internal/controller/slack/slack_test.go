@@ -18,6 +18,8 @@ package slack
 
 import (
 	"context"
+	"github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/api/builtin/problem/notifications"
+	"github.com/dynatrace-oss/terraform-provider-dynatrace/dynatrace/settings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -37,7 +39,7 @@ import (
 
 func TestObserve(t *testing.T) {
 	type fields struct {
-		service interface{}
+		service settings.CRUDService[*notifications.Notification]
 	}
 
 	type args struct {

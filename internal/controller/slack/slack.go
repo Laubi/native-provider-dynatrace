@@ -55,19 +55,13 @@ const (
 	errNewClient = "cannot create new Service"
 )
 
-type service struct {
-	client settings.CRUDService[*notifications.Notification]
-}
-
-func newService(data []byte) (*service, error) {
+func newService(data []byte) (settings.CRUDService[*notifications.Notification], error) {
 	c, err := credentials.Unmarshal(data)
 	if err != nil {
 		return nil, err
 	}
 
-	return &service{
-		client: notifications.Service(c, notifications.Types.Email),
-	}, nil
+	return notifications.Service(c, notifications.Types.Slack), nil
 }
 
 // Setup adds a controller that reconciles Slack managed resources.
@@ -103,7 +97,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 type connector struct {
 	kube         client.Client
 	usage        resource.Tracker
-	newServiceFn func(creds []byte) (*service, error)
+	newServiceFn func(creds []byte) (settings.CRUDService[*notifications.Notification], error)
 }
 
 // Connect typically produces an ExternalClient by:
@@ -145,7 +139,7 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 type external struct {
 	// A 'client' used to connect to the external resource API. In practice this
 	// would be something like an AWS SDK client.
-	service *service
+	service settings.CRUDService[*notifications.Notification]
 }
 
 func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
@@ -156,7 +150,7 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 
 	id := meta.GetExternalName(cr)
 	var n notifications.Notification
-	err := c.service.client.Get(id, &n)
+	err := c.service.Get(id, &n)
 	if err != nil {
 		var restError rest.Error
 		if errors.As(err, &restError) {
@@ -209,7 +203,7 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 	cr.Status.SetConditions(xpv1.Creating())
 
 	n := crdToDto(cr.Spec.ForProvider)
-	apiResp, err := c.service.client.Create(&n)
+	apiResp, err := c.service.Create(&n)
 	if err != nil {
 		return managed.ExternalCreation{}, err
 	}
@@ -227,7 +221,7 @@ func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.Ext
 
 	id := meta.GetExternalName(cr)
 	n := crdToDto(cr.Spec.ForProvider)
-	err := c.service.client.Update(id, &n)
+	err := c.service.Update(id, &n)
 	if err != nil {
 		return managed.ExternalUpdate{}, err
 	}
@@ -241,7 +235,7 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) error {
 		return errors.New(errNotSlack)
 	}
 
-	err := c.service.client.Delete(meta.GetExternalName(cr))
+	err := c.service.Delete(meta.GetExternalName(cr))
 	if err != nil {
 		return err
 	}
