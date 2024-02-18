@@ -7,6 +7,10 @@ on:
       - release-*
   workflow_dispatch: {}
 
+permissions:
+  actions: write
+  contents: read
+
 jobs:
   detect-noop:
     runs-on: ubuntu-22.04
